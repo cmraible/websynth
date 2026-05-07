@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WebSynth — Song</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #0e0e12;
+      color: #eee;
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+    }
+    h1 { letter-spacing: 0.1em; margin: 0; }
+    button {
+      background: #4af;
+      color: #061018;
+      border: none;
+      padding: 0.9rem 2rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button:hover { background: #6cf; }
+    button:disabled { background: #333; color: #888; cursor: default; }
+    canvas {
+      width: 600px;
+      max-width: 90vw;
+      height: 140px;
+      background: #06070a;
+      border: 1px solid #222;
+      border-radius: 6px;
+    }
+    .meta { color: #888; font-size: 0.9rem; }
+    a { color: #6cf; }
+  </style>
+</head>
+<body>
+  <h1>WEBSYNTH — A SHORT SONG</h1>
+  <p class="meta">~30 seconds. Synthesized live, no samples.</p>
+  <canvas id="scope" width="1200" height="280"></canvas>
+  <button id="play">Play</button>
+  <p class="meta"><a href="/">← back to the synth</a></p>
+  <script src="song.js"></script>
+</body>
+</html>
