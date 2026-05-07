@@ -266,6 +266,11 @@ function bindKeyboardInput() {
 }
 
 function bindControls() {
+  const blurAfterUse = (el) => {
+    el.addEventListener('pointerup', () => el.blur());
+    el.addEventListener('change', () => el.blur());
+  };
+
   const bindRange = (id, key, onChange) => {
     const input = document.getElementById(id);
     const out = document.getElementById(id + 'Val');
@@ -274,15 +279,21 @@ function bindControls() {
       out.textContent = input.value;
       if (onChange) onChange();
     });
+    blurAfterUse(input);
   };
 
-  document.getElementById('waveform').addEventListener('change', (e) => {
+  const waveformSelect = document.getElementById('waveform');
+  waveformSelect.addEventListener('change', (e) => {
     params.waveform = e.target.value;
     if (osc) osc.type = params.waveform;
   });
-  document.getElementById('scale').addEventListener('change', (e) => {
+  blurAfterUse(waveformSelect);
+
+  const scaleSelect = document.getElementById('scale');
+  scaleSelect.addEventListener('change', (e) => {
     params.scale = e.target.value;
   });
+  blurAfterUse(scaleSelect);
   bindRange('resonance', 'resonance', () => { if (filter) filter.Q.value = params.resonance; });
   bindRange('glide', 'glide');
   bindRange('lfoRate', 'lfoRate', () => { if (lfo) lfo.frequency.value = params.lfoRate; });
