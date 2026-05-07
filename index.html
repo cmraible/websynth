@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WebSynth</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #0e0e12;
+      color: #eee;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+      margin: 0;
+    }
+    h1 { margin-bottom: 0.5rem; letter-spacing: 0.1em; }
+    .hint { color: #888; margin-bottom: 1.5rem; font-size: 0.9rem; }
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+      width: 100%;
+      max-width: 720px;
+    }
+    .control {
+      background: #1c1c22;
+      padding: 0.75rem;
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+    }
+    .control label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #aaa;
+      margin-bottom: 0.4rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .help {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #333;
+      color: #aaa;
+      font-size: 0.65rem;
+      cursor: help;
+      position: relative;
+      font-family: ui-monospace, monospace;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+    .help:hover { background: #4af; color: #061018; }
+    .help::after {
+      content: attr(data-help);
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 8px);
+      transform: translateX(-50%);
+      background: #06070a;
+      color: #ddd;
+      border: 1px solid #4af;
+      border-radius: 4px;
+      padding: 0.5rem 0.65rem;
+      width: 220px;
+      font-size: 0.75rem;
+      letter-spacing: 0;
+      text-transform: none;
+      line-height: 1.35;
+      text-align: left;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s;
+      z-index: 10;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    }
+    .help:hover::after, .help:focus::after { opacity: 1; }
+    .control select, .control input {
+      background: #0e0e12;
+      color: #eee;
+      border: 1px solid #444;
+      border-radius: 4px;
+      padding: 0.3rem;
+    }
+    .pad-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    #pad {
+      width: 600px;
+      max-width: 90vw;
+      aspect-ratio: 1.4 / 1;
+      background:
+        radial-gradient(circle at var(--x, 50%) var(--y, 50%),
+          rgba(80, 180, 255, 0.35), rgba(80, 180, 255, 0) 60%),
+        linear-gradient(135deg, #1a1a24, #2a1a3a);
+      border: 1px solid #333;
+      border-radius: 8px;
+      position: relative;
+      cursor: crosshair;
+      touch-action: none;
+      box-shadow: inset 0 0 60px rgba(0,0,0,0.6);
+    }
+    #pad::before, #pad::after {
+      content: '';
+      position: absolute;
+      background: rgba(255,255,255,0.04);
+    }
+    #pad::before { left: 50%; top: 0; bottom: 0; width: 1px; }
+    #pad::after  { top: 50%; left: 0; right: 0; height: 1px; }
+    .axis-label {
+      position: absolute;
+      color: #888;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      pointer-events: none;
+    }
+    .axis-x { bottom: 6px; right: 10px; }
+    .axis-y { bottom: 10px; left: 10px; writing-mode: vertical-rl; transform: rotate(180deg); }
+    #cursor {
+      position: absolute;
+      width: 18px; height: 18px;
+      border: 2px solid #4af;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      box-shadow: 0 0 12px #4af;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    #pad.active #cursor { opacity: 1; }
+    .readout {
+      font-family: ui-monospace, monospace;
+      color: #6cf;
+      font-size: 0.85rem;
+    }
+    #scope {
+      width: 600px;
+      max-width: 90vw;
+      height: 140px;
+      background: #06070a;
+      border: 1px solid #222;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      display: block;
+    }
+    .toggle {
+      display: inline-flex;
+      background: #1c1c22;
+      border-radius: 6px;
+      padding: 4px;
+      margin-bottom: 1.5rem;
+      gap: 4px;
+    }
+    .toggle button {
+      background: transparent;
+      color: #aaa;
+      border: none;
+      padding: 0.4rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      letter-spacing: 0.05em;
+    }
+    .toggle button.active {
+      background: #4af;
+      color: #061018;
+      font-weight: 600;
+    }
+    .keyboard {
+      position: relative;
+      display: flex;
+      user-select: none;
+      touch-action: none;
+    }
+    .key {
+      width: 50px;
+      height: 180px;
+      background: #fafafa;
+      border: 1px solid #333;
+      border-radius: 0 0 4px 4px;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      padding-bottom: 0.5rem;
+      cursor: pointer;
+      font-size: 0.75rem;
+    }
+    .key.black {
+      width: 32px;
+      height: 110px;
+      background: #222;
+      color: #ccc;
+      margin-left: -16px;
+      margin-right: -16px;
+      z-index: 2;
+      border-radius: 0 0 3px 3px;
+    }
+    .key.active { background: #4af; color: #fff; }
+    .key.black.active { background: #28a; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <h1>WEBSYNTH</h1>
+  <p class="hint" id="hint">Click and drag on the pad — X controls pitch, Y controls filter cutoff</p>
+
+  <div class="toggle" role="tablist">
+    <button id="modePad" class="active" type="button">XY Pad</button>
+    <button id="modeKeys" type="button">Keyboard</button>
+  </div>
+
+  <div class="controls">
+    <div class="control">
+      <label for="waveform">Waveform <span class="help" tabindex="0" data-help="The shape of the raw oscillator before any filtering. Sine = pure tone. Triangle = soft, flutey. Square = hollow/buzzy (NES-like). Sawtooth = bright and brassy, classic synth sound.">?</span></label>
+      <select id="waveform">
+        <option value="sine">Sine</option>
+        <option value="square">Square</option>
+        <option value="sawtooth" selected>Sawtooth</option>
+        <option value="triangle">Triangle</option>
+      </select>
+    </div>
+    <div class="control">
+      <label for="resonance">Resonance <span id="resonanceVal">8</span> <span class="help" tabindex="0" data-help="Emphasis at the filter's cutoff frequency. Low = smooth, polite filter. High = a sharp peak that 'rings' — gives that squelchy, vocal, acid-house quality. Crank it for drama.">?</span></label>
+      <input type="range" id="resonance" min="0" max="25" step="0.1" value="8">
+    </div>
+    <div class="control">
+      <label for="glide">Glide <span id="glideVal">0.05</span>s <span class="help" tabindex="0" data-help="Time to slide from one pitch to the next instead of jumping instantly (a.k.a. portamento). 0 = no glide. Higher = lazy, sliding pitches between notes. Famous on TB-303 basslines.">?</span></label>
+      <input type="range" id="glide" min="0" max="1" step="0.01" value="0.05">
+    </div>
+    <div class="control">
+      <label for="lfoRate">LFO Rate <span id="lfoRateVal">0</span> Hz <span class="help" tabindex="0" data-help="Speed of the Low Frequency Oscillator that wobbles your pitch. Slow = gentle vibrato. Fast = warbly / dive-bomb effects. Has no audible effect unless LFO Depth is above 0.">?</span></label>
+      <input type="range" id="lfoRate" min="0" max="20" step="0.1" value="0">
+    </div>
+    <div class="control">
+      <label for="lfoDepth">LFO Depth <span id="lfoDepthVal">0</span> <span class="help" tabindex="0" data-help="How much the LFO wiggles the pitch (in Hz). Small = subtle vibrato. Large = a full siren or seasick wobble. Pair with LFO Rate.">?</span></label>
+      <input type="range" id="lfoDepth" min="0" max="50" step="0.5" value="0">
+    </div>
+    <div class="control">
+      <label for="volume">Volume <span id="volumeVal">0.3</span> <span class="help" tabindex="0" data-help="Master output level. Keep it modest — synths can be much louder than they look, especially with high resonance.">?</span></label>
+      <input type="range" id="volume" min="0" max="1" step="0.01" value="0.3">
+    </div>
+    <div class="control" id="cutoffControl">
+      <label for="cutoff">Cutoff <span id="cutoffVal">2000</span> Hz <span class="help" tabindex="0" data-help="Low-pass filter cutoff. Frequencies above this are removed. Low = dark, muffled, bassy. High = bright, full-spectrum. The single most defining synth control.">?</span></label>
+      <input type="range" id="cutoff" min="100" max="8000" value="2000">
+    </div>
+    <div class="control">
+      <label for="scale">Scale Snap <span class="help" tabindex="0" data-help="On the XY pad, snaps your continuous X position to the nearest note in the chosen scale. None = totally smooth/glissando. Pentatonic and Blues are hard to play 'wrong'.">?</span></label>
+      <select id="scale">
+        <option value="none">None (continuous)</option>
+        <option value="chromatic">Chromatic</option>
+        <option value="major" selected>Major</option>
+        <option value="minor">Minor</option>
+        <option value="pentatonic">Pentatonic</option>
+        <option value="blues">Blues</option>
+      </select>
+    </div>
+    <div class="control">
+      <label>Readout</label>
+      <div class="readout" id="readout">—</div>
+    </div>
+  </div>
+
+  <canvas id="scope" width="1200" height="180"></canvas>
+
+  <div class="pad-wrap" id="padWrap">
+    <div id="pad">
+      <span class="axis-label axis-x">Pitch →</span>
+      <span class="axis-label axis-y">Cutoff →</span>
+      <div id="cursor"></div>
+    </div>
+  </div>
+
+  <div class="keyboard hidden" id="keyboard"></div>
+
+  <script src="synth.js"></script>
+</body>
+</html>
